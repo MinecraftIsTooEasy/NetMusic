@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "com.github.tartaricacid.netmusic.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "target": "DEFAULT",
+  "minVersion": "0.8.3",
+  "client": [
+    "RenderBlocksMixin",
+    "MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+

@@ -1,0 +1,124 @@
+﻿itemGroup.NetMusic=网络音乐机
+
+item.music_cd.name=音乐唱片
+
+tile.netmusic:music_player.name=唱片机
+tile.netmusic:cd_burner.name=唱片刻录机
+tile.netmusic:computer.name=电脑
+
+tooltips.netmusic.cd.trans_name=歌名
+tooltips.netmusic.cd.artists=歌手
+tooltips.netmusic.cd.time=时长
+tooltips.netmusic.cd.time.format=%s分%s秒
+tooltips.netmusic.cd.empty=空
+tooltips.netmusic.cd.read_only=[只读]
+
+block.netmusic.cd_burner.desc=可写入网易云或 QQ 音乐链接（由配置决定）
+block.netmusic.computer.web_link.desc=你可以输入任意网络链接，只支持 mp3 和 flac 格式
+block.netmusic.computer.local_file.desc=你还可以使用本地文件路径，但这样就只有你自己能听到音乐
+
+message.netmusic.music_player.need_vip=这首歌曲是 VIP 歌曲，无法播放
+message.netmusic.music_player.404=无法找到链接为 %s 的歌曲
+message.netmusic.cd_burner.applied=已将待写入的刻录机歌曲写入你的唱片。
+message.netmusic.computer.applied=已将待写入的电脑歌曲写入你的唱片。
+message.netmusic.music_cd.need_writable_cd=你的背包里没有可写音乐唱片。
+
+subtitle.netmusic.block.music_player=唱片机声
+
+command.netmusic.music_cd.reload.success=所有的唱片重载了！
+command.netmusic.config.reload.success=NetMusic 配置已重载。
+command.netmusic.music_cd.add163.success=添加网易云歌单成功！
+command.netmusic.music_cd.add163.fail=添加网易云歌单失败！请检查歌单 ID 是否错误？
+command.netmusic.music_cd.add163cd.success=添加网易云单曲成功！
+command.netmusic.music_cd.add163cd.fail=添加网易云单曲失败！请检查歌曲 ID 是否错误？
+command.netmusic.music_cd.no_song_info=无法解析歌曲信息。
+command.netmusic.music_cd.direct_give_fail=发放已写入唱片失败。
+command.netmusic.music_cd.need_writable_cd=你的背包里没有可写音乐唱片。
+command.netmusic.music_cd.cd_read_only=唱片为只读，无法覆盖写入。
+command.netmusic.music_cd.output_not_empty=请先取走输出槽中的唱片。
+command.netmusic.music_cd.addDJcd.success=添加网易云播客声音成功！
+command.netmusic.music_cd.addDJcd.fail=添加网易云播客声音失败！请检查播客声音 ID 是否错误？
+command.netmusic.music_cd.addurlcd.success=写入网络/本地音乐到唱片成功！
+command.netmusic.music_cd.addurlcd.fail=写入网络/本地音乐到唱片失败！请检查链接或本地路径。
+command.netmusic.music_cd.url.not_supported=只支持 mp3 或 flac 音频格式。
+command.netmusic.music_cd.time.fail=歌曲时长无效！请输入正整数秒数。
+command.netmusic.music_cd.name.fail=歌曲名不能为空！
+command.netmusic.music_cd.need_interaction=请先右键唱片刻录机或电脑，再手持可写音乐唱片执行命令。
+command.netmusic.music_cd.need_cd_burner=请先右键唱片刻录机，再手持可写音乐唱片执行命令。
+command.netmusic.music_cd.need_computer=请先右键电脑，再手持可写音乐唱片执行命令。
+command.netmusic.music_cd.status=最近 NetMusic 交互：%s
+command.netmusic.music_cd.pending.saved=已保存待写入歌曲(%s)：%s
+command.netmusic.music_cd.pending.status=待写入歌曲：%s
+command.netmusic.music_cd.pending.clear=已清空待写入歌曲队列。
+command.netmusic.player_only=该命令只能由玩家执行。
+command.netmusic.status.none=无
+command.netmusic.status.entry=%s @(%s,%s,%s) 距今=%s刻
+command.netmusic.pending.none=无
+command.netmusic.pending.entry=%s:%s 距今=%s刻
+command.netmusic.source.cd_burner=唱片刻录机
+command.netmusic.source.computer=电脑
+
+gui.netmusic.lyric.waiting=等待歌词中...
+gui.netmusic.lyric.no_lyric=无歌词
+gui.netmusic.cd_burner.craft=制作唱片
+gui.netmusic.cd_burner.read_only=只读
+gui.netmusic.cd_burner.provider=音源
+gui.netmusic.cd_burner.provider.short=源
+gui.netmusic.cd_burner.cookie_button=登录/Cookie
+gui.netmusic.cd_burner.cookie_imported=已从剪贴板导入 Cookie（已自动提取关键字段）。
+gui.netmusic.cd_burner.cookie_opened=已打开登录页。登录后复制整段 Cookie，本界面会自动识别并导入。
+gui.netmusic.cd_burner.cookie_open_failed=无法打开登录页，请手动打开并复制 Cookie。
+gui.netmusic.cd_burner.id.tips=输入歌曲 ID
+gui.netmusic.cd_burner.id.tips.qq=输入 QQ 歌曲 MID 或链接
+gui.netmusic.cd_burner.no_music_id=歌曲ID不能为空！
+gui.netmusic.cd_burner.music_id_error=歌曲ID错误，请输入正确的歌曲ID！
+gui.netmusic.cd_burner.get_info_error=无法获取歌曲信息，请检查歌曲ID或者网络！
+gui.netmusic.cd_burner.cd_read_only=这个唱片是只读的！
+gui.netmusic.cd_burner.cd_is_empty=请在输入格放入唱片
+gui.netmusic.cd_burner.output_not_empty=请先取出输出格的唱片
+gui.netmusic.computer.cd_read_only=这个唱片是只读的！
+gui.netmusic.computer.cd_is_empty=请在输入格放入唱片
+gui.netmusic.computer.output_not_empty=请先取出输出格的唱片
+gui.netmusic.computer.url.tips=输入歌曲 URL
+gui.netmusic.computer.url.empty=歌曲URL不能为空
+gui.netmusic.computer.url.error=歌曲URL格式不正确，请输入网络链接或者本地文件路径
+gui.netmusic.computer.url.not_supported=只支持 mp3 或 flac 音频格式
+gui.netmusic.computer.url.local_file_error=本地文件不存在
+gui.netmusic.computer.name.tips=输入歌曲名
+gui.netmusic.computer.name.empty=歌曲名不能为空
+gui.netmusic.computer.time.tips=时长(秒)
+gui.netmusic.computer.time.empty=歌曲时长不能为空
+gui.netmusic.computer.time.not_number=歌曲时长格式不正确，请输入数字！
+
+config.name.netmusic.general=通用设置
+config.name.netmusic.general.enable_stereo=启用立体声
+config.comment.netmusic.general.enable_stereo=是否启用立体声效果
+config.name.netmusic.general.music_player_volume=播放器音量倍率
+config.comment.netmusic.general.music_player_volume=播放器音量倍率(0.0~2.0)，并会叠加距离衰减
+config.name.netmusic.general.music_player_hear_distance=播放器听音距离
+config.comment.netmusic.general.music_player_hear_distance=播放器声音传播距离(1~256)，默认 64 格
+config.name.netmusic.general.proxy_type=代理类型
+config.comment.netmusic.general.proxy_type=代理类型，HTTP 和 SOCKS 都支持
+config.name.netmusic.general.proxy_address=代理地址
+config.comment.netmusic.general.proxy_address=代理地址，例如 127.0.0.1:1080，为空则不使用代理
+config.name.netmusic.general.cd_provider=刻录机音源
+config.comment.netmusic.general.cd_provider=选择刻录机默认音源：NETEASE 或 QQ
+config.enum.netmusic.general.cd_provider.NETEASE=网易云音乐
+config.enum.netmusic.general.cd_provider.QQ=QQ 音乐
+config.name.netmusic.general.netease_vip_cookie=网易云 VIP Cookie
+config.comment.netmusic.general.netease_vip_cookie=用于播放网易云 VIP 歌曲，留空则无法播放 VIP 歌曲
+config.name.netmusic.general.qq_vip_cookie=QQ 音乐 VIP Cookie
+config.comment.netmusic.general.qq_vip_cookie=用于解析 QQ 音乐 VIP 歌曲，留空则仅可尝试非 VIP/试听链接
+config.name.netmusic.general.enable_player_lyrics=唱片机歌词显示
+config.comment.netmusic.general.enable_player_lyrics=是否为唱片机启用歌词显示
+config.name.netmusic.general.enable_debug_mode=调试模式
+config.comment.netmusic.general.enable_debug_mode=输出 QQ/播放解析关键日志，定位 VIP 与链接问题
+config.name.netmusic.general.original_player_lyrics_color=播放器歌词颜色(原歌词)
+config.comment.netmusic.general.original_player_lyrics_color=播放器中原歌词的颜色，使用 #ARGB 格式
+config.name.netmusic.general.translated_player_lyrics_color=播放器歌词颜色(翻译歌词)
+config.comment.netmusic.general.translated_player_lyrics_color=播放器中翻译歌词的颜色，使用 #ARGB 格式
+
+emi.music_cd.info=用于写入音乐的唱片，如果为只读则无法覆盖已写入的音乐。
+emi.music_player.info=将音乐唱片放入唱片机，享受你喜爱的音乐。
+emi.cd_burner.info=可按配置写入网易云或 QQ 音乐链接
+emi.computer.info=用于通过本地或网络将喜欢的音乐写入唱片，仅支持 mp3/flac 格式

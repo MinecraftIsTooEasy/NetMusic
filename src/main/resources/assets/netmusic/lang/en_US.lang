@@ -1,0 +1,124 @@
+﻿itemGroup.NetMusic=Net Music
+
+item.music_cd.name=Music CD
+
+tile.netmusic:music_player.name=Music Player
+tile.netmusic:cd_burner.name=CD Burner
+tile.netmusic:computer.name=Computer
+
+tooltips.netmusic.cd.trans_name=Name
+tooltips.netmusic.cd.artists=Artists
+tooltips.netmusic.cd.time=Time
+tooltips.netmusic.cd.time.format=%smin%ss
+tooltips.netmusic.cd.empty=Empty
+tooltips.netmusic.cd.read_only=[Read Only]
+
+block.netmusic.cd_burner.desc=Writes NetEase or QQ Music links (provider controlled by config)
+block.netmusic.computer.web_link.desc=You can use any network link, Only supports mp3 and flac formats
+block.netmusic.computer.local_file.desc=You can also use the local file path, but then only you can hear the music
+
+message.netmusic.music_player.need_vip=This song is a VIP song and cannot be played
+message.netmusic.music_player.404=Unable to find song: %s
+message.netmusic.cd_burner.applied=Pending CD Burner song written to your CD.
+message.netmusic.computer.applied=Pending Computer song written to your CD.
+message.netmusic.music_cd.need_writable_cd=No writable Music CD found in your inventory.
+
+subtitle.netmusic.block.music_player=Music Player Sound
+
+command.netmusic.music_cd.reload.success=All CD is reloaded!
+command.netmusic.config.reload.success=NetMusic config reloaded.
+command.netmusic.music_cd.add163.success=Add NetEase music list success!
+command.netmusic.music_cd.add163.fail=Add NetEase music list fail! Please check if the playlist ID is mistyped?
+command.netmusic.music_cd.add163cd.success=Add NetEase music success!
+command.netmusic.music_cd.add163cd.fail=Add NetEase music fail! Please check if the music ID is mistyped?
+command.netmusic.music_cd.no_song_info=Unable to resolve song information.
+command.netmusic.music_cd.direct_give_fail=Failed to give prewritten CD.
+command.netmusic.music_cd.need_writable_cd=No writable Music CD found in your inventory.
+command.netmusic.music_cd.cd_read_only=The Music CD is read only and cannot be overwritten.
+command.netmusic.music_cd.output_not_empty=Take the CD from the output slot first.
+command.netmusic.music_cd.addDJcd.success=Add NetEase DJ music success!
+command.netmusic.music_cd.addDJcd.fail=Add NetEase DJ music fail! Please check if the DJ music ID is mistyped?
+command.netmusic.music_cd.addurlcd.success=Write URL music to CD success!
+command.netmusic.music_cd.addurlcd.fail=Write URL music to CD fail! Please check URL or local path.
+command.netmusic.music_cd.url.not_supported=Only mp3 and flac audio formats are supported.
+command.netmusic.music_cd.time.fail=Invalid song time! Please input a positive number.
+command.netmusic.music_cd.name.fail=Song name cannot be empty!
+command.netmusic.music_cd.need_interaction=Right-click CD Burner or Computer first, then hold a writable Music CD.
+command.netmusic.music_cd.need_cd_burner=Right-click CD Burner first, then hold a writable Music CD.
+command.netmusic.music_cd.need_computer=Right-click Computer first, then hold a writable Music CD.
+command.netmusic.music_cd.status=Recent NetMusic interaction: %s
+command.netmusic.music_cd.pending.saved=Pending song saved (%s): %s
+command.netmusic.music_cd.pending.status=Pending song: %s
+command.netmusic.music_cd.pending.clear=Pending song queue cleared.
+command.netmusic.player_only=This command can only be used by players.
+command.netmusic.status.none=none
+command.netmusic.status.entry=%s @(%s,%s,%s) age=%st
+command.netmusic.pending.none=none
+command.netmusic.pending.entry=%s:%s age=%st
+command.netmusic.source.cd_burner=CD Burner
+command.netmusic.source.computer=Computer
+
+gui.netmusic.lyric.waiting=Waiting for lyrics...
+gui.netmusic.lyric.no_lyric=No Lyrics
+gui.netmusic.cd_burner.craft=Craft CD
+gui.netmusic.cd_burner.read_only=Read Only
+gui.netmusic.cd_burner.provider=Provider
+gui.netmusic.cd_burner.provider.short=Src
+gui.netmusic.cd_burner.cookie_button=Login/Cookie
+gui.netmusic.cd_burner.cookie_imported=Cookie imported from clipboard (essential fields extracted).
+gui.netmusic.cd_burner.cookie_opened=Login page opened. Copy full cookie and this screen will auto-detect/import it.
+gui.netmusic.cd_burner.cookie_open_failed=Failed to open login page. Open it manually and copy cookie.
+gui.netmusic.cd_burner.id.tips=Enter the song ID
+gui.netmusic.cd_burner.id.tips.qq=Enter QQ song MID or link
+gui.netmusic.cd_burner.no_music_id=The song ID cannot be empty!
+gui.netmusic.cd_burner.music_id_error=The song ID format is incorrect!
+gui.netmusic.cd_burner.get_info_error=The song information cannot be obtained, please check the song ID or network
+gui.netmusic.cd_burner.cd_read_only=The CD is read only!
+gui.netmusic.cd_burner.cd_is_empty=Please put the CD in the input slot!
+gui.netmusic.cd_burner.output_not_empty=Please take the CD from the output slot first.
+gui.netmusic.computer.cd_read_only=The CD is read only!
+gui.netmusic.computer.cd_is_empty=Please put the CD in the input slot!
+gui.netmusic.computer.output_not_empty=Please take the CD from the output slot first.
+gui.netmusic.computer.url.tips=Enter the song url
+gui.netmusic.computer.url.empty=The song URL cannot be empty
+gui.netmusic.computer.url.error=The song URL format is incorrect, please enter a web link or local file path
+gui.netmusic.computer.url.not_supported=Only mp3 and flac audio formats are supported.
+gui.netmusic.computer.url.local_file_error=The local file does not exist
+gui.netmusic.computer.name.tips=Enter the song name
+gui.netmusic.computer.name.empty=The song name cannot be empty
+gui.netmusic.computer.time.tips=Time (s)
+gui.netmusic.computer.time.empty=The song time cannot be empty
+gui.netmusic.computer.time.not_number=The song time format is incorrect, please enter the song time as a number!
+
+config.name.netmusic.general=General Settings
+config.name.netmusic.general.enable_stereo=Enable Stereo
+config.comment.netmusic.general.enable_stereo=Whether stereo playback is enabled
+config.name.netmusic.general.music_player_volume=Music Player Volume Multiplier
+config.comment.netmusic.general.music_player_volume=Volume multiplier (0.0~2.0), combined with distance attenuation
+config.name.netmusic.general.music_player_hear_distance=Music Player Hear Distance
+config.comment.netmusic.general.music_player_hear_distance=Audible distance of the music player (1~256), default 64 blocks
+config.name.netmusic.general.proxy_type=Proxy Type
+config.comment.netmusic.general.proxy_type=Proxy Type, http and socks are supported
+config.name.netmusic.general.proxy_address=Proxy Address
+config.comment.netmusic.general.proxy_address=Proxy Address, such as 127.0.0.1:1080, empty is no proxy
+config.name.netmusic.general.cd_provider=CD Burner Provider
+config.comment.netmusic.general.cd_provider=Default provider used by CD Burner: NETEASE or QQ
+config.enum.netmusic.general.cd_provider.NETEASE=NetEase
+config.enum.netmusic.general.cd_provider.QQ=QQ Music
+config.name.netmusic.general.netease_vip_cookie=NetEase VIP Cookie
+config.comment.netmusic.general.netease_vip_cookie=Cookie used to resolve/play NetEase VIP songs
+config.name.netmusic.general.qq_vip_cookie=QQ Music VIP Cookie
+config.comment.netmusic.general.qq_vip_cookie=VIP cookie for QQ Music resolving; leave empty for non-VIP/trial links only
+config.name.netmusic.general.enable_player_lyrics=Enable Player Lyrics
+config.comment.netmusic.general.enable_player_lyrics=Whether to enable lyrics display in the music player
+config.name.netmusic.general.enable_debug_mode=Debug Mode
+config.comment.netmusic.general.enable_debug_mode=Output QQ/playback debug logs for VIP and URL resolution issues
+config.name.netmusic.general.original_player_lyrics_color=Original Player Lyrics Color
+config.comment.netmusic.general.original_player_lyrics_color=The color of the original lyrics in the music player, in #ARGB format
+config.name.netmusic.general.translated_player_lyrics_color=Translated Player Lyrics Color
+config.comment.netmusic.general.translated_player_lyrics_color=The color of the translated lyrics in the music player, in #ARGB format
+
+emi.music_cd.info=A music CD used for writing musics, if it's read only, a music cannot be overwritten.
+emi.music_player.info=Place a Music CD on a music player and enjoy your favorite music.
+emi.cd_burner.info=Writes NetEase or QQ Music links according to config
+emi.computer.info=Used for writing your favorite music to the CD via Local or Network, Only supports mp3/flac format

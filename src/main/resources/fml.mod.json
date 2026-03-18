@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "netmusic",
+  "version": "${version}",
+  "name": "Net Music Mod",
+  "depends": {
+    "fishmodloader": ">=3.4.2",
+    "rusted_iron_core": ">=1.5.0",
+    "many-lib": ">=2.3.0"
+  },
+  "description": "A music player mod",
+  "authors": [
+    "IMG",
+    "TartaricAcid",
+    "郝南村",
+    "琥珀酸",
+    "帕金伊",
+    "SQwatermark",
+    "Inf1nlty"
+  ],
+  "contact": {
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/net-music",
+    "sources": "https://github.com/ming-sc/NetMusic-Fabric"
+  },
+  "license": "MIT",
+  "icon": "assets/netmusic/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.github.tartaricacid.netmusic.NetMusic"
+    ],
+    "client": [
+      "com.github.tartaricacid.netmusic.client.NetMusicClient"
+    ],
+    "emi": [
+      "com.github.tartaricacid.netmusic.compat.EmiPluginImpl"
+    ],
+    "modmenu": [
+      "com.github.tartaricacid.netmusic.compat.ModMenuApiImpl"
+    ]
+  },
+  "mixins": [
+    "netmusic.mixins.json"
+  ],
+  "accessWidener" : "netmusic.accesswidener"
+}
