@@ -26,20 +26,21 @@ import java.util.regex.Pattern;
 
 public class MusicToClientMessage implements Message {
     public static final ResourceLocation ID = new ResourceLocation(NetMusic.MOD_ID, "play_music");
-    private static final String MUSIC_163_URL = "https://music.163.com/";
-    private static final Pattern MUSIC_163_ID_PATTERN = Pattern.compile("^.*?[?&]id=(\\d+)\\.mp3$");
-    private static final Pattern NETEASE_ID_PATTERN = Pattern.compile("[?&]id=(\\d+)");
+    private static final Pattern MUSIC_163_ID_PATTERN = Pattern.compile("(?i)[?&]id=(\\d+)(?:\\.mp3)?");
+    private static final Pattern NETEASE_FRAGMENT_ID_PATTERN = Pattern.compile("(?i)(?:netmusic_songid)(?:=|/)(\\d+)");
     private static final Pattern QQ_MID_PATTERN = Pattern.compile("(?i)(?:songmid|netmusic_songmid)(?:=|/)([0-9a-z]{14})");
     private static final Pattern QQ_SONG_DETAIL_PATTERN = Pattern.compile("(?i)/songDetail/([0-9a-z]{14})");
     private static final Pattern QQ_FILENAME_MID_PATTERN = Pattern.compile("(?i)(?:^|/)[a-z]{1,2}\\d{3}([0-9a-z]{14})\\.(?:mp3|m4a|flac|wav|ogg)");
     private static final int LYRIC_CACHE_MAX = 64;
     private static final long RECOVERY_LYRIC_COOLDOWN_MS = 8000L;
-    private static final Map<String, LyricRecord> LYRIC_CACHE = new LinkedHashMap<String, LyricRecord>(LYRIC_CACHE_MAX + 1, 0.75F, true) {
+    private static final Map<String, LyricRecord> LYRIC_CACHE = new LinkedHashMap<>(LYRIC_CACHE_MAX + 1, 0.75F, true) {
+
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, LyricRecord> eldest) {
             return this.size() > LYRIC_CACHE_MAX;
         }
     };
+
     private static final Map<String, Long> LYRIC_MISS_UNTIL = new LinkedHashMap<String, Long>();
 
     public final int x;
@@ -266,7 +267,15 @@ public class MusicToClientMessage implements Message {
         if (StringUtils.isBlank(url)) {
             return "";
         }
-        Matcher matcher = NETEASE_ID_PATTERN.matcher(url);
+        Matcher markerMatcher = NETEASE_FRAGMENT_ID_PATTERN.matcher(url);
+        if (markerMatcher.find()) {
+            return markerMatcher.group(1);
+        }
+        String lower = url.toLowerCase(Locale.ROOT);
+        if (!lower.contains("music.163.com")) {
+            return "";
+        }
+        Matcher matcher = MUSIC_163_ID_PATTERN.matcher(url);
         if (matcher.find()) {
             return matcher.group(1);
         }
@@ -341,19 +350,16 @@ public class MusicToClientMessage implements Message {
     }
 
     private static LyricRecord doResolveLyric(String url, String songName) {
-        if (url.startsWith(MUSIC_163_URL)) {
-            Matcher matcher = MUSIC_163_ID_PATTERN.matcher(url);
-            if (matcher.find()) {
-                try {
-                    long musicId = Long.parseLong(matcher.group(1));
-                    String lyricJson = NetMusic.NET_EASE_WEB_API.lyric(musicId);
-                    return LyricParser.parseLyric(lyricJson, songName);
-                } catch (NumberFormatException | IOException e) {
-                    NetMusic.LOGGER.warn("Failed to load lyric for {}", url, e);
-                    return null;
-                }
+        String neteaseId = extractNeteaseId(url);
+        if (StringUtils.isNotBlank(neteaseId)) {
+            try {
+                long musicId = Long.parseLong(neteaseId);
+                String lyricJson = NetMusic.NET_EASE_WEB_API.lyric(musicId);
+                return LyricParser.parseLyric(lyricJson, songName);
+            } catch (NumberFormatException | IOException e) {
+                NetMusic.LOGGER.warn("Failed to load lyric for {}", url, e);
+                return null;
             }
-            return null;
         }
         if (QqMusicApi.isValidMid(QqMusicApi.extractMid(url))) {
             return QqMusicApi.resolveLyric(url, songName);

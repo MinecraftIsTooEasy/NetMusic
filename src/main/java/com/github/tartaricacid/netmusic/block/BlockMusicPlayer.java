@@ -27,8 +27,13 @@ import net.minecraft.World;
 import net.xiaoyu233.fml.reload.utils.IdUtil;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class BlockMusicPlayer extends BlockDirectionalWithTileEntity {
     public static final int CYCLE_DISABLE_MASK = 4;
+    private static final Pattern NETEASE_OUTER_ID_PATTERN = Pattern.compile("(?i)[?&]id=(\\d+)(?:\\.mp3)?");
+    private static final Pattern NETEASE_FRAGMENT_ID_PATTERN = Pattern.compile("(?i)(?:netmusic_songid)(?:=|/)(\\d+)");
 
     public BlockMusicPlayer() {
         this(IdUtil.getNextBlockID());
@@ -247,9 +252,10 @@ public class BlockMusicPlayer extends BlockDirectionalWithTileEntity {
                 return mergeResolvedSongInfo(base, resolved);
             }
             if (isNeteaseSongUrl(base.songUrl)) {
+                String songId = extractNeteaseSongId(base.songUrl);
                 String resolvedUrl = NeteaseVipMusicApi.resolveByOuterUrl(base.songUrl, cookiePair.neteaseCookie);
                 if (StringUtils.isNotBlank(resolvedUrl)) {
-                    base.songUrl = resolvedUrl.trim();
+                    base.songUrl = withNeteaseSongIdMarker(resolvedUrl.trim(), songId);
                 }
             }
             return base;
@@ -278,6 +284,39 @@ public class BlockMusicPlayer extends BlockDirectionalWithTileEntity {
         resolved.readOnly = fallback.readOnly;
         resolved.vip = fallback.vip;
         return SongInfoHelper.sanitize(resolved);
+    }
+
+    private static String withNeteaseSongIdMarker(String url, String songId) {
+        if (StringUtils.isBlank(url) || StringUtils.isBlank(songId)) {
+            return url;
+        }
+        if (NETEASE_FRAGMENT_ID_PATTERN.matcher(url).find()) {
+            return url;
+        }
+        int hash = url.indexOf('#');
+        if (hash < 0) {
+            return url + "#netmusic_songid=" + songId;
+        }
+        String fragment = url.substring(hash + 1);
+        if (StringUtils.isBlank(fragment)) {
+            return url + "netmusic_songid=" + songId;
+        }
+        return url + "&netmusic_songid=" + songId;
+    }
+
+    private static String extractNeteaseSongId(String url) {
+        if (StringUtils.isBlank(url)) {
+            return "";
+        }
+        Matcher fragmentMatcher = NETEASE_FRAGMENT_ID_PATTERN.matcher(url);
+        if (fragmentMatcher.find()) {
+            return fragmentMatcher.group(1);
+        }
+        Matcher outerMatcher = NETEASE_OUTER_ID_PATTERN.matcher(url);
+        if (outerMatcher.find()) {
+            return outerMatcher.group(1);
+        }
+        return "";
     }
 
     private static boolean isQqSongUrl(String url) {
