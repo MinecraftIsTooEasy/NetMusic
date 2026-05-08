@@ -5,7 +5,7 @@ import com.github.tartaricacid.netmusic.client.network.ClientNetWorkHandler;
 import com.github.tartaricacid.netmusic.config.GeneralConfig;
 import com.github.tartaricacid.netmusic.config.MusicProviderType;
 import com.github.tartaricacid.netmusic.config.PlayerVipCookieStore;
-import com.github.tartaricacid.netmusic.network.message.SyncVipCookieMessage;
+import com.github.tartaricacid.netmusic.network.packet.SyncVipCookiePacket;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.EntityPlayer;
@@ -16,12 +16,10 @@ import java.util.UUID;
 
 @Environment(EnvType.CLIENT)
 public final class ClientVipCookieManager {
+
     private static String activePlayerKey;
     private static String lastSyncedNetease = "";
     private static String lastSyncedQq = "";
-
-    private ClientVipCookieManager() {
-    }
 
     public static void clientTick() {
         Minecraft mc = Minecraft.getMinecraft();
@@ -96,7 +94,7 @@ public final class ClientVipCookieManager {
         if (!force && lastSyncedNetease.equals(netease) && lastSyncedQq.equals(qq)) {
             return;
         }
-        ClientNetWorkHandler.sendToServer(new SyncVipCookieMessage(netease, qq));
+        ClientNetWorkHandler.sendToServer(new SyncVipCookiePacket(netease, qq));
         lastSyncedNetease = netease;
         lastSyncedQq = qq;
     }

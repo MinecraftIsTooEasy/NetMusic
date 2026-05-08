@@ -12,6 +12,7 @@ base {
 }
 
 repositories {
+    mavenCentral()
     maven {
         name = "ModdedMITE"
         url = uri("https://maven.limingzxc.top/repository/maven-public/")
@@ -31,18 +32,23 @@ dependencies {
     fml "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
     implementation "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
 
-    implementation "com.github.MinecraftIsTooEasy:ManyLib:2.3.0"
+    implementation "com.github.MinecraftIsTooEasy:ManyLib:2.3.1"
     implementation "com.github.MinecraftIsTooEasy:ModMenu:10.1.1"
-    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.0"
+    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.4"
+    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.4:sources"
+//    implementation files("../RustedIronCore/build/libs/RustedIronCore-1.5.4.jar")
 
     implementation "com.github.MinecraftIsTooEasy:Gson:2.10.1"
     implementation "com.github.MinecraftIsTooEasy:FastUtil:8.5.12"
-    implementation "com.github.MinecraftIsTooEasy:EMI:1.1.25"
+    implementation "com.github.MinecraftIsTooEasy:EMI:1.1.26"
+
+    localRuntime "com.github.MinecraftIsTooEasy:ModernMITE:3.7.5"
 
     shade files("libs/jflac-codec-1.5.3-SNAPSHOT.jar")
     shade files("libs/jlayer-1.0.1.4.jar")
     shade files("libs/mp3spi-1.9.5.4.jar")
     shade files("libs/tritonus-share-0.3.7.4.jar")
+    shade files("libs/javasound-aac-0.9.6.jar")
     shade files("libs/commons-codec-1.15.jar")
     shade files("libs/commons-lang3-3.12.0.jar")
 }
@@ -115,14 +121,23 @@ tasks.named('runClient', JavaExec).configure { exec ->
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            groupId = project.maven_group
+            artifactId = project.archives_base_name
+            version = project.mod_version
             from components.java
         }
     }
 
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {
-        // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
+        maven {
+            name = "ModdedMITE"
+            url = uri("https://maven.limingzxc.top/repository/maven-releases/")
+            credentials {
+                // Read only from gradle.properties (user level, your gradle_home)
+                username = project.findProperty("nexusUsername")
+                password = project.findProperty("nexusPassword")
+            }
+        }
     }
 }

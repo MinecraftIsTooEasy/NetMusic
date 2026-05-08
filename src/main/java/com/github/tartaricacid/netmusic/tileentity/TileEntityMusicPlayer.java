@@ -5,8 +5,8 @@ import com.github.tartaricacid.netmusic.block.BlockMusicPlayer;
 import com.github.tartaricacid.netmusic.init.InitItems;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.network.NetworkHandler;
-import com.github.tartaricacid.netmusic.network.message.MusicToClientMessage;
-import com.github.tartaricacid.netmusic.network.message.MusicPlayerStateMessage;
+import com.github.tartaricacid.netmusic.network.packet.MusicToClientPacket;
+import com.github.tartaricacid.netmusic.network.packet.MusicPlayerStatePacket;
 import com.github.tartaricacid.netmusic.util.SongInfoHelper;
 import net.minecraft.ItemStack;
 import net.minecraft.NBTTagCompound;
@@ -18,6 +18,7 @@ import net.minecraft.TileEntity;
 import javax.annotation.Nullable;
 
 public class TileEntityMusicPlayer extends TileEntity {
+
     private static final String IS_PLAY_TAG = "IsPlay";
     private static final String CURRENT_TIME_TAG = "CurrentTime";
     private static final String SIGNAL_TAG = "RedStoneSignal";
@@ -338,13 +339,13 @@ public class TileEntityMusicPlayer extends TileEntity {
         }
 
         NetworkHandler.sendToNearBy(this.worldObj, this.xCoord, this.yCoord, this.zCoord,
-                new MusicPlayerStateMessage(this.xCoord, this.yCoord, this.zCoord,
+                new MusicPlayerStatePacket(this.xCoord, this.yCoord, this.zCoord,
                         this.isPlay, this.currentTime, this.hasSignal, this.playSessionId, stack, songUrl, songTime, songName));
 
         if (this.isPlay && songTime > 0 && !songUrl.isEmpty()) {
             int startTick = computeStartTick(songTime, this.currentTime);
             NetworkHandler.sendToNearBy(this.worldObj, this.xCoord, this.yCoord, this.zCoord,
-                    new MusicToClientMessage(this.xCoord, this.yCoord, this.zCoord,
+                    new MusicToClientPacket(this.xCoord, this.yCoord, this.zCoord,
                             songUrl, songTime, songName, startTick, this.playSessionId));
         }
     }

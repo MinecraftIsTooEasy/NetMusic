@@ -4,12 +4,12 @@ import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 
 public final class ScreenSubmitResult {
     private final boolean success;
-    private final String messageKey;
+    private final String packetKey;
     private final ItemMusicCD.SongInfo songInfo;
 
-    private ScreenSubmitResult(boolean success, String messageKey, ItemMusicCD.SongInfo songInfo) {
+    private ScreenSubmitResult(boolean success, String packetKey, ItemMusicCD.SongInfo songInfo) {
         this.success = success;
-        this.messageKey = messageKey;
+        this.packetKey = packetKey;
         this.songInfo = songInfo;
     }
 
@@ -17,16 +17,16 @@ public final class ScreenSubmitResult {
         return new ScreenSubmitResult(true, null, songInfo);
     }
 
-    public static ScreenSubmitResult fail(String messageKey) {
-        return new ScreenSubmitResult(false, messageKey, null);
+    public static ScreenSubmitResult fail(String packetKey) {
+        return new ScreenSubmitResult(false, packetKey, null);
     }
 
     public boolean isSuccess() {
         return success;
     }
 
-    public String getMessageKey() {
-        return messageKey;
+    public String getPacketKey() {
+        return packetKey;
     }
 
     public ItemMusicCD.SongInfo getSongInfo() {

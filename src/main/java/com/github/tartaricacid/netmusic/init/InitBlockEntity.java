@@ -1,5 +1,6 @@
 package com.github.tartaricacid.netmusic.init;
 
+import com.github.tartaricacid.netmusic.tileentity.TileEntityBigMegaphone;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityCDBurner;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityComputer;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
@@ -10,5 +11,6 @@ public class InitBlockEntity {
         event.register(TileEntityMusicPlayer.class, "NetMusicMusicPlayer");
         event.register(TileEntityCDBurner.class, "NetMusicCDBurner");
         event.register(TileEntityComputer.class, "NetMusicComputer");
+        event.register(TileEntityBigMegaphone.class, "NetMusicBigMegaphone");
     }
 }

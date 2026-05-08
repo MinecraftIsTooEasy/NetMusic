@@ -1,10 +1,9 @@
 package com.github.tartaricacid.netmusic.block;
 
-import com.github.tartaricacid.netmusic.client.renderer.RenderTypes;
 import com.github.tartaricacid.netmusic.creativetab.NetMusicCreativeTab;
 import com.github.tartaricacid.netmusic.inventory.ComputerMenu;
 import com.github.tartaricacid.netmusic.network.NetworkHandler;
-import com.github.tartaricacid.netmusic.network.message.OpenMenuMessage;
+import com.github.tartaricacid.netmusic.network.packet.OpenMenuPacket;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityComputer;
 import com.github.tartaricacid.netmusic.util.ServerWindowIdHelper;
 import net.minecraft.*;
@@ -68,7 +67,7 @@ public class BlockComputer extends BlockDirectionalWithTileEntity {
         player.openContainer.windowId = windowId;
 
         NetworkHandler.sendToClientPlayer(
-                new OpenMenuMessage(OpenMenuMessage.Type.COMPUTER, windowId, x, y, z),
+                new OpenMenuPacket(OpenMenuPacket.Type.COMPUTER, windowId, x, y, z),
                 player
         );
         player.openContainer.addCraftingToCrafters(player);
@@ -111,10 +110,5 @@ public class BlockComputer extends BlockDirectionalWithTileEntity {
     @Override
     public TileEntity createNewTileEntity(World world) {
         return new TileEntityComputer();
-    }
-
-    @Override
-    public int getRenderType() {
-        return RenderTypes.computerRenderType;
     }
 }

@@ -1,10 +1,9 @@
 package com.github.tartaricacid.netmusic.block;
 
-import com.github.tartaricacid.netmusic.client.renderer.RenderTypes;
 import com.github.tartaricacid.netmusic.creativetab.NetMusicCreativeTab;
 import com.github.tartaricacid.netmusic.inventory.CDBurnerMenu;
 import com.github.tartaricacid.netmusic.network.NetworkHandler;
-import com.github.tartaricacid.netmusic.network.message.OpenMenuMessage;
+import com.github.tartaricacid.netmusic.network.packet.OpenMenuPacket;
 import com.github.tartaricacid.netmusic.util.ServerWindowIdHelper;
 import net.minecraft.*;
 import net.minecraft.TileEntity;
@@ -74,7 +73,7 @@ public class BlockCDBurner extends BlockDirectionalWithTileEntity {
         player.openContainer.windowId = windowId;
 
         NetworkHandler.sendToClientPlayer(
-                new OpenMenuMessage(OpenMenuMessage.Type.CD_BURNER, windowId, x, y, z),
+                new OpenMenuPacket(OpenMenuPacket.Type.CD_BURNER, windowId, x, y, z),
                 player
         );
         player.openContainer.addCraftingToCrafters(player);
@@ -118,10 +117,4 @@ public class BlockCDBurner extends BlockDirectionalWithTileEntity {
     public TileEntity createNewTileEntity(World world) {
         return new TileEntityCDBurner();
     }
-
-    @Override
-    public int getRenderType() {
-        return RenderTypes.cdBurnerRenderType;
-    }
-
 }

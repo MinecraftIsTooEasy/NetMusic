@@ -14,6 +14,7 @@ import net.minecraft.BlockConstants;
 import net.minecraft.BlockDirectionalWithTileEntity;
 import net.minecraft.Container;
 import net.minecraft.Entity;
+import net.minecraft.EntityItem;
 import net.minecraft.EntityPlayer;
 import net.minecraft.EnumDirection;
 import net.minecraft.EnumFace;
@@ -204,12 +205,26 @@ public class BlockMusicPlayer extends BlockDirectionalWithTileEntity {
     public void breakBlock(World world, int x, int y, int z, int blockId, int metadata) {
         TileEntity tileEntity = world.getBlockTileEntity(x, y, z);
         if (tileEntity instanceof TileEntityMusicPlayer musicPlayer) {
+            if (!world.isRemote && musicPlayer.isPlay()) {
+                musicPlayer.setPlay(false);
+                musicPlayer.setCurrentTime(0);
+                musicPlayer.setChanged();
+            }
             ItemStack stack = musicPlayer.getItem(0);
             if (stack != null) {
-                this.dropBlockAsEntityItem(new BlockBreakInfo(world, x, y, z), stack);
+                dropMusicCdWithNbt(world, x, y, z, stack);
             }
         }
         super.breakBlock(world, x, y, z, blockId, metadata);
+    }
+
+    private static void dropMusicCdWithNbt(World world, int x, int y, int z, ItemStack stack) {
+        if (world == null || world.isRemote || stack == null) {
+            return;
+        }
+        ItemStack dropped = stack.copy();
+        EntityItem entityItem = new EntityItem(world, x + 0.5D, y + 0.25D, z + 0.5D, dropped);
+        world.spawnEntityInWorld(entityItem);
     }
 
     @Override

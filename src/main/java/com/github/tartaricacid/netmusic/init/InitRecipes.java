@@ -12,6 +12,7 @@ public final class InitRecipes {
     public static void registerRecipes(RecipeRegistryEvent event) {
         registerMusicPlayerRecipes(event);
         registerMachineRecipes(event);
+        registerBigMegaphoneRecipe(event);
         registerMusicCdRecipe(event);
     }
 
@@ -43,5 +44,13 @@ public final class InitRecipes {
                 new ItemStack(Item.dyePowder, 1, 3),
                 new ItemStack(Item.clay),
                 new ItemStack(Item.clay));
+    }
+
+    private static void registerBigMegaphoneRecipe(RecipeRegistryEvent event) {
+        event.registerShapedRecipe(new ItemStack(InitBlocks.BIG_MEGAPHONE), false,
+                " I ", "I I", "NRI",
+                'I', new ItemStack(Item.ingotIron),
+                'N', new ItemStack(Block.music),
+                'R', new ItemStack(Item.redstone));
     }
 }

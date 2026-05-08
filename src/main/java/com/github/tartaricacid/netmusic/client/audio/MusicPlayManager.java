@@ -1,6 +1,7 @@
 package com.github.tartaricacid.netmusic.client.audio;
 
 import com.github.tartaricacid.netmusic.NetMusic;
+import com.github.tartaricacid.netmusic.client.api.AudioStreamHandlerManager;
 import com.github.tartaricacid.netmusic.api.netease.NeteaseVipMusicApi;
 import com.github.tartaricacid.netmusic.api.NetWorker;
 import com.github.tartaricacid.netmusic.api.qq.QqMusicApi;
@@ -15,7 +16,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
@@ -25,20 +28,29 @@ public final class MusicPlayManager {
     private static final String LOCAL_FILE_PROTOCOL = "file";
     private static final Object RESOLVE_LOCK = new Object();
     private static volatile int resolveSession = 0;
+    private static final Map<String, Integer> resolveSessionsByKey = new HashMap<>();
 
     public static void play(String url, String songName, Function<URL, Object> sound) {
+        play("", url, songName, sound);
+    }
+
+    public static void play(String resolveKey, String url, String songName, Function<URL, Object> sound) {
+        String safeResolveKey = resolveKey == null ? "" : resolveKey;
         final int session;
         synchronized (RESOLVE_LOCK) {
             session = ++resolveSession;
+            if (!safeResolveKey.isEmpty()) {
+                resolveSessionsByKey.put(safeResolveKey, session);
+            }
         }
         final String inputUrl = url;
         final String inputSongName = songName;
-        Thread resolver = new Thread(() -> resolveAndPlay(session, inputUrl, inputSongName, sound), "NetMusic-Resolve");
+        Thread resolver = new Thread(() -> resolveAndPlay(safeResolveKey, session, inputUrl, inputSongName, sound), "NetMusic-Resolve");
         resolver.setDaemon(true);
         resolver.start();
     }
 
-    private static void resolveAndPlay(int session, String url, String songName, Function<URL, Object> sound) {
+    private static void resolveAndPlay(String resolveKey, int session, String url, String songName, Function<URL, Object> sound) {
         String rawUrl = url;
         if (GeneralConfig.ENABLE_DEBUG_MODE) {
             NetMusic.LOGGER.info("[NetMusic Debug][Play] request url={} song={}", rawUrl, songName);
@@ -98,15 +110,19 @@ public final class MusicPlayManager {
             }
             return;
         }
-        if (!isCurrentSession(session)) {
+        if (!isCurrentSession(resolveKey, session)) {
             return;
         }
         playMusic(url, songName, sound);
     }
 
-    private static boolean isCurrentSession(int session) {
+    private static boolean isCurrentSession(String resolveKey, int session) {
         synchronized (RESOLVE_LOCK) {
-            return session == resolveSession;
+            if (resolveKey == null || resolveKey.isEmpty()) {
+                return session == resolveSession;
+            }
+            Integer current = resolveSessionsByKey.get(resolveKey);
+            return current != null && current == session;
         }
     }
 
@@ -135,6 +151,12 @@ public final class MusicPlayManager {
     }
 
     private static boolean isDirectAudioUrl(String url) {
+        try {
+            if (AudioStreamHandlerManager.canHandle(new URL(url))) {
+                return true;
+            }
+        } catch (Exception ignored) {
+        }
         String normalized = stripQueryAndFragment(url).toLowerCase(Locale.ROOT);
         return normalized.endsWith(".mp3")
                 || normalized.endsWith(".flac")

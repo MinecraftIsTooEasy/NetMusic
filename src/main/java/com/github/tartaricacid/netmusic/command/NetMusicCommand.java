@@ -7,7 +7,7 @@ import com.github.tartaricacid.netmusic.event.ConfigEvent;
 import com.github.tartaricacid.netmusic.inventory.CDBurnerMenu;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.network.NetworkHandler;
-import com.github.tartaricacid.netmusic.network.message.GetMusicListMessage;
+import com.github.tartaricacid.netmusic.network.packet.GetMusicListPacket;
 import com.github.tartaricacid.netmusic.util.MusicCdWriteHelper;
 import com.github.tartaricacid.netmusic.util.PendingSongTracker;
 import com.github.tartaricacid.netmusic.util.PlayerInteractionTracker;
@@ -69,7 +69,7 @@ public class NetMusicCommand extends CommandBase {
         if ("reload".equalsIgnoreCase(sub)) {
             GeneralConfig.reload();
             ConfigEvent.onConfigReloading();
-            NetworkHandler.sendToClientPlayer(new GetMusicListMessage(GetMusicListMessage.RELOAD_MESSAGE), player);
+            NetworkHandler.sendToClientPlayer(new GetMusicListPacket(GetMusicListPacket.RELOAD_PACKET), player);
             sender.sendChatToPlayer(ChatMessageComponent.createFromText(
                     StatCollector.translateToLocal("command.netmusic.music_cd.reload.success")));
             sender.sendChatToPlayer(ChatMessageComponent.createFromText(
@@ -113,7 +113,7 @@ public class NetMusicCommand extends CommandBase {
                 if (playlistId <= 0) {
                     throw new NumberFormatException();
                 }
-                NetworkHandler.sendToClientPlayer(new GetMusicListMessage(playlistId), player);
+                NetworkHandler.sendToClientPlayer(new GetMusicListPacket(playlistId), player);
             } catch (NumberFormatException e) {
                 sender.sendChatToPlayer(ChatMessageComponent.createFromText(
                         StatCollector.translateToLocal("command.netmusic.music_cd.add163.fail")));
@@ -189,7 +189,7 @@ public class NetMusicCommand extends CommandBase {
             }
             ScreenSubmitResult result = ComputerInputParser.parseSongInfo(args[1], joinName(args, 3), args[2], false);
             if (!result.isSuccess()) {
-                String key = ScreenSubmitResult.resolveFeedbackKey(result.getMessageKey(), "command.netmusic.music_cd.addurlcd.fail");
+                String key = ScreenSubmitResult.resolveFeedbackKey(result.getPacketKey(), "command.netmusic.music_cd.addurlcd.fail");
                 sender.sendChatToPlayer(ChatMessageComponent.createFromText(StatCollector.translateToLocal(key)));
                 return;
             }

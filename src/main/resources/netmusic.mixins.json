@@ -5,11 +5,13 @@
   "target": "DEFAULT",
   "minVersion": "0.8.3",
   "client": [
+    "RenderItemMixin",
     "RenderBlocksMixin",
-    "MinecraftMixin"
+    "ItemRendererMixin",
+    "RenderBipedMixin",
+    "RenderPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   }
 }
-

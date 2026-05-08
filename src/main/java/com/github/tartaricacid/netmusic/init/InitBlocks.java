@@ -1,5 +1,6 @@
 package com.github.tartaricacid.netmusic.init;
 
+import com.github.tartaricacid.netmusic.block.BlockBigMegaphone;
 import com.github.tartaricacid.netmusic.block.BlockCDBurner;
 import com.github.tartaricacid.netmusic.block.BlockComputer;
 import com.github.tartaricacid.netmusic.block.BlockMusicPlayer;
@@ -13,6 +14,7 @@ public class InitBlocks {
     public static Block MUSIC_PLAYER;
     public static Block CD_BURNER;
     public static Block COMPUTER;
+    public static Block BIG_MEGAPHONE;
 
     public static void registerBlocks(BlockRegistryEvent event) {
 
@@ -27,5 +29,9 @@ public class InitBlocks {
         COMPUTER = new BlockComputer();
         Item.itemsList[COMPUTER.blockID] = new ItemBlock(COMPUTER);
         event.registerBlock("NetMusic", "netmusic:computer", "computer", COMPUTER);
+
+        BIG_MEGAPHONE = new BlockBigMegaphone();
+        Item.itemsList[BIG_MEGAPHONE.blockID] = new ItemBlock(BIG_MEGAPHONE);
+        event.registerBlock("NetMusic", "netmusic:big_megaphone", "big_megaphone", BIG_MEGAPHONE);
     }
 }

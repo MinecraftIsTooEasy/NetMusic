@@ -25,6 +25,7 @@ import java.util.List;
 
 public final class MusicListManage {
     private static final int MAX_NUM = 100;
+    private static final String DEFAULT_RESOURCE_PATH = "assets/netmusic/music.json";
     private static final Gson GSON = new Gson();
     private static final Path CONFIG_DIR = Paths.get("config").resolve("net_music");
     private static final Path CONFIG_FILE = CONFIG_DIR.resolve("music.json");
@@ -38,14 +39,16 @@ public final class MusicListManage {
             Files.createDirectories(CONFIG_DIR);
         }
 
-        File file = CONFIG_FILE.toFile();
-        if (!Files.exists(CONFIG_FILE)) {
+        InputStream stream = Files.exists(CONFIG_FILE)
+                ? Files.newInputStream(CONFIG_FILE.toFile().toPath())
+                : MusicListManage.class.getClassLoader().getResourceAsStream(DEFAULT_RESOURCE_PATH);
+        if (stream == null) {
             SONGS = Lists.newArrayList();
             return;
         }
 
-        try (InputStream stream = Files.newInputStream(file.toPath())) {
-            SONGS = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8),
+        try (InputStream input = stream) {
+            SONGS = GSON.fromJson(new InputStreamReader(input, StandardCharsets.UTF_8),
                     new TypeToken<List<ItemMusicCD.SongInfo>>() {
                     }.getType());
         }

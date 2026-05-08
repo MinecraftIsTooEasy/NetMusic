@@ -7,7 +7,7 @@ import com.github.tartaricacid.netmusic.config.MusicProviderType;
 import com.github.tartaricacid.netmusic.config.NetMusicConfigs;
 import com.github.tartaricacid.netmusic.inventory.CDBurnerMenu;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
-import com.github.tartaricacid.netmusic.network.message.SetMusicIDMessage;
+import com.github.tartaricacid.netmusic.network.packet.SetMusicIDPacket;
 import com.github.tartaricacid.netmusic.util.CDBurnerInputParser;
 import com.github.tartaricacid.netmusic.util.ScreenSubmitResult;
 import net.minecraft.GuiButton;
@@ -308,7 +308,7 @@ public class GuiCDBurnerScreen extends GuiContainer {
 
         ScreenSubmitResult result = CDBurnerInputParser.parseSongInfo(this.idField.getText(), this.readOnly);
         if (!result.isSuccess()) {
-            this.tipsKey = result.getMessageKey();
+            this.tipsKey = result.getPacketKey();
             return;
         }
         ItemMusicCD.SongInfo songInfo = result.getSongInfo();
@@ -317,7 +317,7 @@ public class GuiCDBurnerScreen extends GuiContainer {
             return;
         }
         this.tipsKey = "";
-        ClientNetWorkHandler.sendToServer(new SetMusicIDMessage(SetMusicIDMessage.Source.CD_BURNER, songInfo));
+        ClientNetWorkHandler.sendToServer(new SetMusicIDPacket(SetMusicIDPacket.Source.CD_BURNER, songInfo));
     }
 
     @Override
@@ -383,4 +383,3 @@ public class GuiCDBurnerScreen extends GuiContainer {
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 }
-

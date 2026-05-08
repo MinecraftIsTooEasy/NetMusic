@@ -3,7 +3,7 @@ package com.github.tartaricacid.netmusic.client.gui;
 import com.github.tartaricacid.netmusic.client.network.ClientNetWorkHandler;
 import com.github.tartaricacid.netmusic.inventory.CDBurnerMenu;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
-import com.github.tartaricacid.netmusic.network.message.SetMusicIDMessage;
+import com.github.tartaricacid.netmusic.network.packet.SetMusicIDPacket;
 import com.github.tartaricacid.netmusic.util.CDBurnerInputParser;
 import com.github.tartaricacid.netmusic.util.ScreenSubmitResult;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +51,7 @@ public class CDBurnerMenuScreen {
 
         ScreenSubmitResult result = CDBurnerInputParser.parseSongInfo(this.musicIdInput, this.readOnly);
         if (!result.isSuccess()) {
-            this.tipsKey = result.getMessageKey();
+            this.tipsKey = result.getPacketKey();
             return false;
         }
 
@@ -62,7 +62,7 @@ public class CDBurnerMenuScreen {
         }
 
         this.tipsKey = "";
-        ClientNetWorkHandler.sendToServer(new SetMusicIDMessage(SetMusicIDMessage.Source.CD_BURNER, songInfo));
+        ClientNetWorkHandler.sendToServer(new SetMusicIDPacket(SetMusicIDPacket.Source.CD_BURNER, songInfo));
         return true;
     }
 }

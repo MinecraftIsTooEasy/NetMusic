@@ -10,6 +10,7 @@ public class InitItems {
     public static Item MUSIC_PLAYER;
     public static Item CD_BURNER;
     public static Item COMPUTER;
+    public static Item BIG_MEGAPHONE;
 
     public static void registerItems(ItemRegistryEvent event) {
 
@@ -24,6 +25,9 @@ public class InitItems {
 
         event.registerItemBlock("Net Music Mod", "netmusic:computer", "computer", InitBlocks.COMPUTER);
         COMPUTER = Item.itemsList[InitBlocks.COMPUTER.blockID];
+
+        event.registerItemBlock("Net Music Mod", "netmusic:big_megaphone", "big_megaphone", InitBlocks.BIG_MEGAPHONE);
+        BIG_MEGAPHONE = Item.itemsList[InitBlocks.BIG_MEGAPHONE.blockID];
 
     }
 }

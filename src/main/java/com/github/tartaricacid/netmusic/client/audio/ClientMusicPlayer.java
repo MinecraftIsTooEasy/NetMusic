@@ -3,6 +3,7 @@ package com.github.tartaricacid.netmusic.client.audio;
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.api.NetWorker;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
+import com.github.tartaricacid.netmusic.client.api.AudioStreamHandlerManager;
 import com.github.tartaricacid.netmusic.config.GeneralConfig;
 import net.minecraft.Minecraft;
 import net.minecraft.TileEntity;
@@ -16,31 +17,96 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 public final class ClientMusicPlayer {
     private static final Object LOCK = new Object();
 
-    private static NetMusicSound currentSound;
-    private static Thread playThread;
-    private static volatile boolean stopRequested;
+    private static final Map<PlaybackKey, PlaybackState> PLAYBACKS = new HashMap<>();
+    private static final Map<PlaybackKey, PendingPlayback> PENDING_PLAYBACKS = new HashMap<>();
     private static volatile int playSession;
-    private static volatile float dynamicVolume = 1.0F;
-    private static volatile boolean gamePaused;
-    private static volatile boolean streamStarted;
-    private static int currentTick;
-    private static int currentPlaybackSessionId;
-    private static String currentSourceId = "";
-    private static String stopRequestReason = "";
-    private static String pendingSourceId = "";
-    private static int pendingX;
-    private static int pendingY;
-    private static int pendingZ;
-    private static long pendingUntilMs;
     private static final Random RANDOM = new Random();
 
     private ClientMusicPlayer() {}
+
+    private static final class PlaybackKey {
+        private final int x;
+        private final int y;
+        private final int z;
+
+        private PlaybackKey(int x, int y, int z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        private static PlaybackKey of(int x, int y, int z) {
+            return new PlaybackKey(x, y, z);
+        }
+
+        private static PlaybackKey of(NetMusicSound sound) {
+            return of(sound.getX(), sound.getY(), sound.getZ());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof PlaybackKey other)) {
+                return false;
+            }
+            return this.x == other.x && this.y == other.y && this.z == other.z;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Integer.hashCode(this.x);
+            result = 31 * result + Integer.hashCode(this.y);
+            result = 31 * result + Integer.hashCode(this.z);
+            return result;
+        }
+    }
+
+    private static final class PlaybackState {
+        private final PlaybackKey key;
+        private final NetMusicSound sound;
+        private final int session;
+        private final int playbackSessionId;
+        private final String sourceId;
+        private volatile boolean stopRequested;
+        private volatile float dynamicVolume = 1.0F;
+        private volatile boolean gamePaused;
+        private volatile boolean streamStarted;
+        private volatile int currentTick;
+        private volatile String stopRequestReason = "";
+        private Thread thread;
+
+        private PlaybackState(PlaybackKey key, NetMusicSound sound, int session, int playbackSessionId,
+                              String sourceId, int startTick) {
+            this.key = key;
+            this.sound = sound;
+            this.session = session;
+            this.playbackSessionId = Math.max(0, playbackSessionId);
+            this.sourceId = sourceId == null ? "" : sourceId;
+            this.currentTick = Math.max(0, startTick);
+        }
+    }
+
+    private static final class PendingPlayback {
+        private final String sourceId;
+        private final long untilMs;
+
+        private PendingPlayback(String sourceId, long untilMs) {
+            this.sourceId = sourceId == null ? "" : sourceId;
+            this.untilMs = untilMs;
+        }
+    }
 
     public static void play(NetMusicSound sound) {
         play(sound, null, 0);
@@ -54,27 +120,38 @@ public final class ClientMusicPlayer {
         if (sound == null) {
             return;
         }
+        PlaybackKey key = PlaybackKey.of(sound);
+        PlaybackState previous;
+        PlaybackState state;
         synchronized (LOCK) {
-            stopInternal("replace_play");
-            currentSound = sound;
-            currentTick = Math.max(0, sound.getStartTick());
-            streamStarted = false;
-            dynamicVolume = (float) GeneralConfig.MUSIC_PLAYER_VOLUME;
-            gamePaused = false;
-            currentPlaybackSessionId = Math.max(0, playbackSessionId);
-            currentSourceId = normalizeSourceId(sourceId, sound);
-            stopRequested = false;
-            stopRequestReason = "";
+            previous = PLAYBACKS.remove(key);
             int session = ++playSession;
-            clearPendingLocked();
+            state = new PlaybackState(key, sound, session, playbackSessionId,
+                    normalizeSourceId(sourceId, sound), sound.getStartTick());
+            state.dynamicVolume = (float) GeneralConfig.MUSIC_PLAYER_VOLUME;
+            PLAYBACKS.put(key, state);
+            PENDING_PLAYBACKS.remove(key);
             if (GeneralConfig.ENABLE_DEBUG_MODE) {
                 NetMusic.LOGGER.info("[NetMusic Debug][Player] start pos=({}, {}, {}) session={} playbackSession={} startTick={} timeSecond={} source={}",
-                        sound.getX(), sound.getY(), sound.getZ(), session, currentPlaybackSessionId,
-                        currentTick, sound.getTimeSecond(), currentSourceId);
+                        sound.getX(), sound.getY(), sound.getZ(), session, state.playbackSessionId,
+                        state.currentTick, sound.getTimeSecond(), state.sourceId);
             }
-            playThread = new Thread(() -> stream(sound, session), "NetMusic-Player");
-            playThread.setDaemon(true);
-            playThread.start();
+            state.thread = new Thread(() -> stream(state), "NetMusic-Player-" + sound.getX() + "-" + sound.getY() + "-" + sound.getZ());
+            state.thread.setDaemon(true);
+            state.thread.start();
+        }
+        stopState(previous, "replace_play");
+    }
+
+    public static void stopAll(String reason) {
+        List<PlaybackState> states;
+        synchronized (LOCK) {
+            states = new ArrayList<>(PLAYBACKS.values());
+            PLAYBACKS.clear();
+            PENDING_PLAYBACKS.clear();
+        }
+        for (PlaybackState state : states) {
+            stopState(state, reason);
         }
     }
 
@@ -83,36 +160,48 @@ public final class ClientMusicPlayer {
     }
 
     public static void stop(String reason) {
+        stopAll(reason);
+    }
+
+    public static void stopAt(int x, int y, int z, String reason) {
+        PlaybackState state;
         synchronized (LOCK) {
-            stopInternal(reason);
+            PlaybackKey key = PlaybackKey.of(x, y, z);
+            state = PLAYBACKS.remove(key);
+            PENDING_PLAYBACKS.remove(key);
+        }
+        stopState(state, reason);
+    }
+
+    private static void stopState(PlaybackState state, String reason) {
+        if (state == null) {
+            return;
+        }
+        state.stopRequested = true;
+        state.stopRequestReason = reason == null ? "unknown" : reason;
+        Thread thread = state.thread;
+        if (thread != null) {
+            thread.interrupt();
         }
     }
 
     public static boolean isPlaying() {
         synchronized (LOCK) {
-            return currentSound != null;
+            return !PLAYBACKS.isEmpty();
         }
     }
 
     public static boolean isPlayingAt(int x, int y, int z) {
         synchronized (LOCK) {
-            return currentSound != null
-                    && currentSound.getX() == x
-                    && currentSound.getY() == y
-                    && currentSound.getZ() == z;
+            return PLAYBACKS.containsKey(PlaybackKey.of(x, y, z));
         }
     }
 
     public static boolean isPlayingAtSource(int x, int y, int z, String sourceId) {
         String normalized = normalizeSourceId(sourceId, null);
         synchronized (LOCK) {
-            if (currentSound == null) {
-                return false;
-            }
-            if (currentSound.getX() != x || currentSound.getY() != y || currentSound.getZ() != z) {
-                return false;
-            }
-            return normalized.equals(currentSourceId);
+            PlaybackState state = PLAYBACKS.get(PlaybackKey.of(x, y, z));
+            return state != null && normalized.equals(state.sourceId);
         }
     }
 
@@ -122,25 +211,15 @@ public final class ClientMusicPlayer {
             return false;
         }
         synchronized (LOCK) {
-            if (currentSound == null) {
-                return false;
-            }
-            if (currentSound.getX() != x || currentSound.getY() != y || currentSound.getZ() != z) {
-                return false;
-            }
-            return safeSession == currentPlaybackSessionId;
+            PlaybackState state = PLAYBACKS.get(PlaybackKey.of(x, y, z));
+            return state != null && safeSession == state.playbackSessionId;
         }
     }
 
     public static int getCurrentPlaybackSessionAt(int x, int y, int z) {
         synchronized (LOCK) {
-            if (currentSound == null) {
-                return 0;
-            }
-            if (currentSound.getX() != x || currentSound.getY() != y || currentSound.getZ() != z) {
-                return 0;
-            }
-            return currentPlaybackSessionId;
+            PlaybackState state = PLAYBACKS.get(PlaybackKey.of(x, y, z));
+            return state == null ? 0 : state.playbackSessionId;
         }
     }
 
@@ -148,13 +227,16 @@ public final class ClientMusicPlayer {
         String normalized = normalizeSourceId(sourceId, null);
         long now = System.currentTimeMillis();
         synchronized (LOCK) {
-            if (pendingSourceId.isEmpty() || now >= pendingUntilMs) {
+            PlaybackKey key = PlaybackKey.of(x, y, z);
+            PendingPlayback pending = PENDING_PLAYBACKS.get(key);
+            if (pending == null) {
                 return false;
             }
-            if (pendingX != x || pendingY != y || pendingZ != z) {
+            if (now >= pending.untilMs) {
+                PENDING_PLAYBACKS.remove(key);
                 return false;
             }
-            return normalized.equals(pendingSourceId);
+            return normalized.equals(pending.sourceId);
         }
     }
 
@@ -166,23 +248,14 @@ public final class ClientMusicPlayer {
         String normalized = normalizeSourceId(sourceId, null);
         long ttl = Math.max(500L, ttlMs);
         synchronized (LOCK) {
-            pendingX = x;
-            pendingY = y;
-            pendingZ = z;
-            pendingSourceId = normalized;
-            pendingUntilMs = System.currentTimeMillis() + ttl;
+            PENDING_PLAYBACKS.put(PlaybackKey.of(x, y, z), new PendingPlayback(normalized, System.currentTimeMillis() + ttl));
         }
     }
 
     public static int getCurrentTickAt(int x, int y, int z) {
         synchronized (LOCK) {
-            if (currentSound == null) {
-                return -1;
-            }
-            if (currentSound.getX() != x || currentSound.getY() != y || currentSound.getZ() != z) {
-                return -1;
-            }
-            return currentTick;
+            PlaybackState state = PLAYBACKS.get(PlaybackKey.of(x, y, z));
+            return state == null ? -1 : state.currentTick;
         }
     }
 
@@ -193,13 +266,11 @@ public final class ClientMusicPlayer {
     public static boolean syncServerTickAt(int x, int y, int z, int targetTick) {
         int safeTick = Math.max(0, targetTick);
         synchronized (LOCK) {
-            if (currentSound == null) {
+            PlaybackState state = PLAYBACKS.get(PlaybackKey.of(x, y, z));
+            if (state == null) {
                 return false;
             }
-            if (currentSound.getX() != x || currentSound.getY() != y || currentSound.getZ() != z) {
-                return false;
-            }
-            currentTick = safeTick;
+            state.currentTick = safeTick;
             return true;
         }
     }
@@ -208,124 +279,114 @@ public final class ClientMusicPlayer {
         String normalized = normalizeSourceId(sourceId, null);
         int safeTick = Math.max(0, targetTick);
         synchronized (LOCK) {
-            if (currentSound == null) {
+            PlaybackState state = PLAYBACKS.get(PlaybackKey.of(x, y, z));
+            if (state == null) {
                 return false;
             }
-            if (currentSound.getX() != x || currentSound.getY() != y || currentSound.getZ() != z) {
+            if (!normalized.equals(state.sourceId)) {
                 return false;
             }
-            if (!normalized.equals(currentSourceId)) {
-                return false;
-            }
-            currentTick = safeTick;
+            state.currentTick = safeTick;
             return true;
         }
     }
 
-    private static void stopInternal(String reason) {
-        stopRequested = true;
-        stopRequestReason = reason == null ? "unknown" : reason;
-        if (playThread != null) {
-            playThread.interrupt();
-            playThread = null;
-        }
-        currentSound = null;
-        currentTick = 0;
-        streamStarted = false;
-        dynamicVolume = 0.0F;
-        gamePaused = false;
-        currentPlaybackSessionId = 0;
-        currentSourceId = "";
-        clearPendingLocked();
-    }
-
     /**
-     * Runs on the client thread once per tick (hooked via {@link com.github.tartaricacid.netmusic.mixin.MinecraftMixin}).
+     * Runs on the client thread once per tick).
      * Server-authoritative mode: client never advances playback progress locally.
      */
     public static void clientTick() {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc == null) {
-            stopWithReason("minecraft_null");
+            stopAllWithDebug("minecraft_null");
             return;
         }
         if (mc.theWorld == null || mc.thePlayer == null) {
+            stopAllWithDebug("world_or_player_null");
             return;
         }
 
-        NetMusicSound sound;
+        List<PlaybackState> states;
         synchronized (LOCK) {
-            sound = currentSound;
+            states = new ArrayList<>(PLAYBACKS.values());
         }
-        if (sound == null) {
+
+        if (states.isEmpty()) {
             return;
         }
 
         if (mc.isGamePaused) {
-            gamePaused = true;
+            for (PlaybackState state : states) {
+                state.gamePaused = true;
+            }
             return;
         }
-        gamePaused = false;
 
-        // Distance attenuation only: don't hard-stop when out of range, so returning to range resumes audio.
-        double dx = mc.thePlayer.posX - (sound.getX() + 0.5D);
-        double dy = mc.thePlayer.posY - (sound.getY() + 0.5D);
-        double dz = mc.thePlayer.posZ - (sound.getZ() + 0.5D);
-        double distSq = dx * dx + dy * dy + dz * dz;
-        float distance = (float) Math.sqrt(distSq);
-        float maxHearDistance = (float) Math.max(1.0D, GeneralConfig.MUSIC_PLAYER_HEAR_DISTANCE);
-        float attenuation = Math.max(0.0F, 1.0F - distance / maxHearDistance);
-        dynamicVolume = clampVolume((float) GeneralConfig.MUSIC_PLAYER_VOLUME * attenuation);
+        for (PlaybackState state : states) {
+            NetMusicSound sound = state.sound;
+            state.gamePaused = false;
 
-        int syncedTick;
-        synchronized (LOCK) {
-            syncedTick = currentTick;
-        }
-
-        // Particle effects: spawn note particles periodically while playing.
-        if (attenuation > 0.0F && mc.theWorld.getTotalWorldTime() % 8L == 0L) {
-            for (int i = 0; i < 2; i++) {
-                mc.theWorld.spawnParticle(net.minecraft.EnumParticle.note,
-                        sound.getX() + RANDOM.nextDouble(),
-                        sound.getY() + 1.0D + RANDOM.nextDouble(),
-                        sound.getZ() + RANDOM.nextDouble(),
-                        RANDOM.nextGaussian(), RANDOM.nextGaussian(), RANDOM.nextInt(3));
+            TileEntity te = mc.theWorld.getBlockTileEntity(sound.getX(), sound.getY(), sound.getZ());
+            boolean isMusicPlayer = te instanceof com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+            boolean isBigMegaphone = te instanceof com.github.tartaricacid.netmusic.tileentity.TileEntityBigMegaphone;
+            if (!isMusicPlayer && !isBigMegaphone) {
+                stopAtWithDebug(sound.getX(), sound.getY(), sound.getZ(), "source_removed");
+                continue;
             }
-        }
 
-        LyricRecord lyricRecord = sound.getLyricRecord();
-        if (lyricRecord != null) {
-            lyricRecord.updateCurrentLine(syncedTick);
-        }
-        TileEntity te = mc.theWorld.getBlockTileEntity(sound.getX(), sound.getY(), sound.getZ());
-        if (te instanceof com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer musicPlayer) {
-            musicPlayer.lyricRecord = lyricRecord;
+            double dx = mc.thePlayer.posX - (sound.getX() + 0.5D);
+            double dy = mc.thePlayer.posY - (sound.getY() + 0.5D);
+            double dz = mc.thePlayer.posZ - (sound.getZ() + 0.5D);
+            double distSq = dx * dx + dy * dy + dz * dz;
+            float distance = (float) Math.sqrt(distSq);
+            float maxHearDistance = Math.max(1.0F, sound.getHearDistance());
+            float attenuation = Math.max(0.0F, 1.0F - distance / maxHearDistance);
+            state.dynamicVolume = clampVolume((float) GeneralConfig.MUSIC_PLAYER_VOLUME * attenuation);
+
+            if (attenuation > 0.0F && mc.theWorld.getTotalWorldTime() % 8L == 0L) {
+                for (int i = 0; i < 2; i++) {
+                    mc.theWorld.spawnParticle(net.minecraft.EnumParticle.note,
+                            sound.getX() + RANDOM.nextDouble(),
+                            sound.getY() + 1.0D + RANDOM.nextDouble(),
+                            sound.getZ() + RANDOM.nextDouble(),
+                            RANDOM.nextGaussian(), RANDOM.nextGaussian(), RANDOM.nextInt(3));
+                }
+            }
+
+            LyricRecord lyricRecord = sound.getLyricRecord();
+            if (lyricRecord != null) {
+                lyricRecord.updateCurrentLine(state.currentTick);
+            }
+            if (te instanceof com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer musicPlayer) {
+                musicPlayer.lyricRecord = lyricRecord;
+            }
         }
     }
 
-    private static void stopWithReason(String reason) {
-        boolean hasSound;
-        synchronized (LOCK) {
-            hasSound = currentSound != null;
-        }
-        if (!hasSound) {
-            return;
-        }
+    private static void stopAllWithDebug(String reason) {
         if (GeneralConfig.ENABLE_DEBUG_MODE) {
             NetMusic.LOGGER.info("[NetMusic Debug][Player] stop reason={}", reason);
         }
-        stop(reason);
+        stopAll(reason);
     }
 
-    private static void stream(NetMusicSound sound, int session) {
+    private static void stopAtWithDebug(int x, int y, int z, String reason) {
+        if (GeneralConfig.ENABLE_DEBUG_MODE) {
+            NetMusic.LOGGER.info("[NetMusic Debug][Player] stop reason={} pos=({}, {}, {})", reason, x, y, z);
+        }
+        stopAt(x, y, z, reason);
+    }
+
+    private static void stream(PlaybackState state) {
+        NetMusicSound sound = state.sound;
+        int session = state.session;
         long timeoutAt = System.currentTimeMillis() + Math.max(sound.getTimeSecond(), 1) * 1000L + 3000L;
-        InputStream source = createSourceStream(sound.getSongUrl());
-        if (source == null) {
+        AudioInputStream openedStream = openAudioInputStream(sound.getSongUrl());
+        if (openedStream == null) {
+            removeStateIfCurrent(state);
             return;
         }
-        try (InputStream remote = new MusicBufferedInputStream(source);
-             InputStream prepared = prepareAudioStream(remote);
-             AudioInputStream compressed = AudioSystem.getAudioInputStream(prepared)) {
+        try (AudioInputStream compressed = openedStream) {
             AudioFormat base = compressed.getFormat();
             AudioFormat decoded = chooseDecodedPcmFormat(base);
             if (decoded == null) {
@@ -342,24 +403,24 @@ public final class ClientMusicPlayer {
                         int targetTick = Math.max(0, sound.getStartTick());
                         skipToStartTick(finalPcm, playbackFormat, targetTick);
                         synchronized (LOCK) {
-                            if (currentSound == sound && session == playSession) {
-                                currentTick = targetTick;
+                            if (PLAYBACKS.get(state.key) == state) {
+                                state.currentTick = targetTick;
                             }
                         }
                         line.open(playbackFormat);
                         line.start();
                         synchronized (LOCK) {
-                            if (currentSound == sound && session == playSession) {
-                                streamStarted = true;
+                            if (PLAYBACKS.get(state.key) == state) {
+                                state.streamStarted = true;
                             }
                         }
                         byte[] buffer = new byte[8192];
                         int read;
                         boolean paused = false;
                         String stopReason = "loop_exit";
-                        while (session == playSession && !stopRequested && !Thread.currentThread().isInterrupted()
+                        while (isStateCurrent(state) && !state.stopRequested && !Thread.currentThread().isInterrupted()
                                 && System.currentTimeMillis() < timeoutAt) {
-                            if (gamePaused) {
+                            if (state.gamePaused) {
                                 if (!paused) {
                                     line.stop();
                                     paused = true;
@@ -380,40 +441,58 @@ public final class ClientMusicPlayer {
                                 stopReason = "eof";
                                 break;
                             }
-                            applyPcmVolume(buffer, read, dynamicVolume, playbackFormat.getSampleSizeInBits(), playbackFormat.isBigEndian());
+                            if (!isStateCurrent(state) || state.stopRequested || Thread.currentThread().isInterrupted()) {
+                                stopReason = state.stopRequested ? "stop_requested" : "session_changed";
+                                break;
+                            }
+                            applyPcmVolume(buffer, read, state.dynamicVolume, playbackFormat.getSampleSizeInBits(), playbackFormat.isBigEndian());
                             line.write(buffer, 0, read);
                         }
-                        if (session != playSession) {
+                        if (!isStateCurrent(state)) {
                             stopReason = "session_changed";
-                        } else if (stopRequested) {
+                        } else if (state.stopRequested) {
                             stopReason = "stop_requested";
                         } else if (Thread.currentThread().isInterrupted()) {
                             stopReason = "thread_interrupted";
                         } else if (System.currentTimeMillis() >= timeoutAt) {
                             stopReason = "timeout";
                         }
-                        String stopRequestDetail = stopRequestReason;
+                        String stopRequestDetail = state.stopRequestReason;
                         if (GeneralConfig.ENABLE_DEBUG_MODE) {
                             NetMusic.LOGGER.info("[NetMusic Debug][Player] stream_end reason={} stop_request={} pos=({}, {}, {}) session={} playbackSession={} source={} tick={} timeSecond={}",
-                                    stopReason, stopRequestDetail, sound.getX(), sound.getY(), sound.getZ(), session, currentPlaybackSessionId, currentSourceId, currentTick, sound.getTimeSecond());
+                                    stopReason, stopRequestDetail, sound.getX(), sound.getY(), sound.getZ(), session,
+                                    state.playbackSessionId, state.sourceId, state.currentTick, sound.getTimeSecond());
                         }
-                        line.drain();
+                        if ("eof".equals(stopReason) || "timeout".equals(stopReason)) {
+                            line.drain();
+                        } else {
+                            line.stop();
+                            line.flush();
+                        }
                     }
                 }
             }
         } catch (Exception e) {
-            if (!stopRequested) {
+            if (!state.stopRequested) {
                 NetMusic.LOGGER.error("Failed to stream music: {}", sound.getSongUrl(), e);
             }
         } finally {
-            synchronized (LOCK) {
-                if (currentSound == sound && session == playSession) {
-                    currentSound = null;
-                    playThread = null;
-                    currentTick = 0;
-                    streamStarted = false;
-                }
+            removeStateIfCurrent(state);
+        }
+    }
+
+    private static void removeStateIfCurrent(PlaybackState state) {
+        synchronized (LOCK) {
+            if (PLAYBACKS.get(state.key) == state) {
+                PLAYBACKS.remove(state.key);
             }
+        }
+        state.streamStarted = false;
+    }
+
+    private static boolean isStateCurrent(PlaybackState state) {
+        synchronized (LOCK) {
+            return PLAYBACKS.get(state.key) == state;
         }
     }
 
@@ -425,12 +504,36 @@ public final class ClientMusicPlayer {
             if ("file".equalsIgnoreCase(songUrl.getProtocol())) {
                 return new FileInputStream(new java.io.File(songUrl.toURI()));
             }
+            if (AudioStreamHandlerManager.canHandle(songUrl)) {
+                return AudioStreamHandlerManager.handle(songUrl);
+            }
             if (shouldUseDirectHttpStream(songUrl)) {
                 return openDirectHttpStream(songUrl);
             }
             return new ChunkedAudioStream(songUrl, NetWorker.getProxyFromConfig());
         } catch (Exception e) {
             NetMusic.LOGGER.error("Failed to open audio source: {}", songUrl, e);
+            return null;
+        }
+    }
+
+    private static AudioInputStream openAudioInputStream(URL songUrl) {
+        InputStream source = createSourceStream(songUrl);
+        if (source == null) {
+            return null;
+        }
+        try {
+            if (source instanceof AudioInputStream audioStream) {
+                return audioStream;
+            }
+            InputStream remote = new MusicBufferedInputStream(source);
+            return AudioSystem.getAudioInputStream(prepareAudioStream(remote));
+        } catch (Exception e) {
+            try {
+                source.close();
+            } catch (Exception ignored) {
+            }
+            NetMusic.LOGGER.error("Failed to decode audio source: {}", songUrl, e);
             return null;
         }
     }
@@ -619,14 +722,6 @@ public final class ClientMusicPlayer {
             return "";
         }
         return value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static void clearPendingLocked() {
-        pendingSourceId = "";
-        pendingUntilMs = 0L;
-        pendingX = 0;
-        pendingY = 0;
-        pendingZ = 0;
     }
 
     private static void skipToStartTick(AudioInputStream stream, AudioFormat format, int startTick) throws java.io.IOException {

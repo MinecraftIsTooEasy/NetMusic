@@ -3,7 +3,7 @@ package com.github.tartaricacid.netmusic.client.gui;
 import com.github.tartaricacid.netmusic.client.network.ClientNetWorkHandler;
 import com.github.tartaricacid.netmusic.inventory.ComputerMenu;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
-import com.github.tartaricacid.netmusic.network.message.SetMusicIDMessage;
+import com.github.tartaricacid.netmusic.network.packet.SetMusicIDPacket;
 import com.github.tartaricacid.netmusic.util.ComputerInputParser;
 import com.github.tartaricacid.netmusic.util.ScreenSubmitResult;
 import net.minecraft.GuiButton;
@@ -102,7 +102,7 @@ public class GuiComputerScreen extends GuiContainer {
         ScreenSubmitResult result = ComputerInputParser.parseSongInfo(
                 this.urlField.getText(), this.nameField.getText(), this.timeField.getText(), this.readOnly);
         if (!result.isSuccess()) {
-            this.tipsKey = result.getMessageKey() == null ? "gui.netmusic.computer.url.error" : result.getMessageKey();
+            this.tipsKey = result.getPacketKey() == null ? "gui.netmusic.computer.url.error" : result.getPacketKey();
             return;
         }
         ItemMusicCD.SongInfo songInfo = result.getSongInfo();
@@ -111,7 +111,7 @@ public class GuiComputerScreen extends GuiContainer {
             return;
         }
         this.tipsKey = "";
-        ClientNetWorkHandler.sendToServer(new SetMusicIDMessage(SetMusicIDMessage.Source.COMPUTER, songInfo));
+        ClientNetWorkHandler.sendToServer(new SetMusicIDPacket(SetMusicIDPacket.Source.COMPUTER, songInfo));
     }
 
     @Override
