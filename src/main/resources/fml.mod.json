@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "netmusic",
+  "id": "${id}",
   "version": "${version}",
-  "name": "Net Music Mod",
+  "name": "${name}",
   "depends": {
     "fishmodloader": ">=3.4.2",
     "rusted_iron_core": ">=1.5.0",
