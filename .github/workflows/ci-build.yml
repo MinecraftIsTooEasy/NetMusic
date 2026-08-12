@@ -50,25 +50,11 @@ jobs:
           echo "Saved $TARGET_JAR"
 
       - name: Build with Gradle
-        run: ./gradlew clean build --no-daemon
-
-      - name: Find built JAR
-        id: find
-        run: |
-          set -e
-          ARTIFACTS=$(ls build/libs/*.jar 2>/dev/null || true)
-          if [ -z "$ARTIFACTS" ]; then
-            echo "No jar found in build/libs/"
-            exit 1
-          fi
-          # output all matching paths (newline-separated)
-          echo "$ARTIFACTS" | tr ' ' '\n' > artifact_paths.txt
-          echo "artifact_list<<EOF" >> $GITHUB_OUTPUT
-          cat artifact_paths.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+        run: ./gradlew clean build prepareReleaseArtifacts --no-daemon
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ github.sha }}
-          path: build/libs/*.jar
+          path: build/release-artifacts/*.jar
+          if-no-files-found: error

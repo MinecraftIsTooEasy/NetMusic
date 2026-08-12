@@ -26,7 +26,12 @@ base {
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repository declarations.
     mavenCentral()
-    maven {
+        mavenLocal()
+        maven {
+            name = "Spongepowered"
+            url = "https://repo.spongepowered.org/repository/maven-public/"
+        }
+        maven {
         name = "ModdedMITE"
         url = uri("https://maven.limingzxc.top/repository/maven-public/")
     }
@@ -45,14 +50,12 @@ dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    fml "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
-    implementation "com.github.MinecraftIsTooEasy:FishModLoader:3.4.2"
+    fml "com.github.MinecraftIsTooEasy:FishModLoader:3.4.3"
+    implementation "com.github.MinecraftIsTooEasy:FishModLoader:3.4.3"
 
     implementation "com.github.MinecraftIsTooEasy:ManyLib:2.3.1"
     implementation "com.github.MinecraftIsTooEasy:ModMenu:10.1.1"
-    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.4"
-    implementation "com.github.MinecraftIsTooEasy:RustedIronCore:1.5.4:sources"
-//    implementation files("../RustedIronCore/build/libs/RustedIronCore-1.5.4.jar")
+    implementation "org.moddedmite:rustedironcore:1.5.8"
 
     implementation "com.github.MinecraftIsTooEasy:Gson:2.10.1"
     implementation "com.github.MinecraftIsTooEasy:FastUtil:8.5.12"
@@ -152,6 +155,20 @@ shadowJar {
 
 assemble.dependsOn tasks.shadowJar
 
+tasks.register("prepareReleaseArtifacts", Sync) {
+    dependsOn tasks.shadowJar, tasks.sourcesJar
+    into layout.buildDirectory.dir("release-artifacts")
+    from tasks.shadowJar.archiveFile
+    from tasks.sourcesJar.archiveFile
+}
+
+// The Java component describes the development JAR. Since the Maven
+// publication replaces it with shadowJar below, its Gradle module metadata
+// would point consumers at the wrong artifact. Maven POM metadata is retained.
+tasks.withType(org.gradle.api.publish.tasks.GenerateModuleMetadata).configureEach {
+    enabled = false
+}
+
 // Configure the Maven publication.
 publishing {
     publications {
@@ -160,6 +177,14 @@ publishing {
             artifactId = project.maven_id
             version = project.mod_version
             from(components.java)
+
+            // Keep dependency metadata from the Java component, but publish the
+            // self-contained shadow JAR as the main artifact. The plain JAR is
+            // only useful in a development classpath and lacks shaded codecs.
+            setArtifacts([
+                    tasks.named("shadowJar"),
+                    tasks.named("sourcesJar")
+            ])
         }
     }
 

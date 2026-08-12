@@ -55,10 +55,11 @@ jobs:
           echo "Saved $TARGET_JAR"
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew clean build prepareReleaseArtifacts --no-daemon
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: "build/libs/*.jar"
+          artifacts: "build/release-artifacts/*.jar"
+          artifactErrorsFailBuild: true
           generateReleaseNotes: true
